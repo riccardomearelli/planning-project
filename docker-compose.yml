@@ -1,0 +1,9 @@
+services:
+  planners:
+    privileged: true
+    build: .
+    stdin_open: true
+    tty: true
+    volumes:
+    - ./input:/input
+    working_dir: /input

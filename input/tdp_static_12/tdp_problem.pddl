@@ -1,0 +1,72 @@
+(define (problem tdp_problem) (:domain tdp_domain)
+(:objects 
+    b100 b95 b90 b85 b80 b75 b70 b65 b60 b55 b50 b45 b40 b35 b30 b25 b20 b15 b10 b05 b00 - battery
+    browsing working entertainment gaming - task
+    ; low medium high veryhigh - tdp
+    h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 - hour ; one more than schedule (12h)
+)
+
+(:init
+    (battery-next b100 b95)
+    (battery-next b95 b90)
+    (battery-next b90 b85)
+    (battery-next b85 b80)
+    (battery-next b80 b75)
+    (battery-next b75 b70)
+    (battery-next b70 b65)
+    (battery-next b65 b60)
+    (battery-next b60 b55)
+    (battery-next b55 b50)
+    (battery-next b50 b45)
+    (battery-next b45 b40)
+    (battery-next b40 b35)
+    (battery-next b35 b30)
+    (battery-next b30 b25)
+    (battery-next b25 b20)
+    (battery-next b20 b15)
+    (battery-next b15 b10)
+    (battery-next b10 b05)
+    (battery-next b05 b00)
+    (next h1 h2)
+    (next h2 h3)
+    (next h3 h4)
+    (next h4 h5)
+    (next h5 h6)
+    (next h6 h7)
+    (next h7 h8)
+    (next h8 h9)
+    (next h9 h10)
+    (next h10 h11)
+    (next h11 h12)
+    (next h12 h13)
+    ; (requires-medium working)
+    ; (requires-medium entertainment)
+    ; (requires-high gaming)
+    ; Initial situation
+    (scheduled h1 working)
+    (scheduled h2 working)
+    (scheduled h3 working)
+    (scheduled h4 browsing)
+    (scheduled h5 browsing)
+    (scheduled h6 browsing)
+    (scheduled h7 browsing)
+    (scheduled h8 browsing)
+    (scheduled h9 browsing)
+    (scheduled h10 gaming)
+    (scheduled h11 gaming)
+    (scheduled h12 browsing)
+    (current h1)
+    (battery-level b100)
+    (= (total-cost) 0)
+)
+
+(:goal
+  (and
+     (current h13) ; for 12 hours schedule
+     (not (battery-level b00))
+  )
+)
+
+(:metric minimize (total-cost))
+
+)
