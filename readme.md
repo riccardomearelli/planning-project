@@ -18,10 +18,21 @@ docker start planners -i
 ```
 
 ## Find a solution
-### A* with ff heuristic
+### A* with specific heuristics
 ``` sh
 cd tdp_x
-downward tdp_domain.pddl tdp_problem.pddl --search "astar(ff())"
+downward tdp_domain.pddl tdp_problem.pddl --search "astar(ff())" # h_ff()
+downward tdp_domain.pddl tdp_problem.pddl --search "astar(add())" # h_add()
+downward tdp_domain.pddl tdp_problem.pddl --search "astar(hmax())" # h_max()
+downward tdp_domain.pddl tdp_problem.pddl --search "astar(blind())" # blind
+```
+### Greedy
+``` sh
+cd tdp_x
+ff tdp_domain.pddl tdp_problem.pddl
+downward tdp_domain.pddl tdp_problem.pddl --search "lazy_greedy([hmax()])" # h_max()
+downward tdp_domain.pddl tdp_problem.pddl --search "lazy_greedy([ff()])" # h_ff()
+downward tdp_domain.pddl tdp_problem.pddl --search "lazy_greedy([add()])" # h_add()
 ```
 ### Weighted A*
 ``` sh

@@ -8,9 +8,9 @@ RUN planutils install -y metric-ff
 # RUN planutils install -y popf
 # RUN planutils install -y optic
 # RUN planutils install -y tfd
-RUN planutils install -y cerberus-sat
+# RUN planutils install -y cerberus-sat
 RUN planutils install -y downward
-RUN pip install --no-cache-dir matplotlib numpy
+# RUN pip install --no-cache-dir matplotlib numpy
 
 # Modify the configuration file to enable hostfs, i.e. use the host file system
 RUN perl -pi.bak -e "s/mount hostfs = no/mount hostfs = yes/g" /etc/apptainer/apptainer.conf
