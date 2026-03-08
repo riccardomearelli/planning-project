@@ -1,0 +1,14 @@
+{
+  "name": "LaTeX (TeX Live)",
+  "image": "texlive/texlive:latest-medium",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "James-Yu.latex-workshop"
+      ]
+    }
+  },
+  
+  "postCreateCommand": "tlmgr update --self && tlmgr install ieeetran && tlmgr install sapthesis"
+}

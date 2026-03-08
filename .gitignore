@@ -9,3 +9,10 @@
 *.8
 *.plan
 sas_plan
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.gz
+*.toc

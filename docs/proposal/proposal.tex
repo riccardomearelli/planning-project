@@ -1,0 +1,125 @@
+\documentclass[12pt]{article}
+% \documentclass[12pt]{sapthesis}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{calc}
+\usepackage{setspace}
+\usepackage[hidelinks]{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tabularx}
+\usepackage{ragged2e}
+\usepackage{geometry}
+\usepackage{url}
+\usepackage{bm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[indent=0pt]{parskip}
+
+\geometry{
+    a4paper,
+    left=3cm,
+    right=3cm,
+    top=3cm,
+    bottom=3cm
+}
+
+% Change the appearence of enumerate lists (only first level)
+% \renewcommand{\labelenumi}{[\arabic{enumi}]}
+
+\graphicspath{ {./images/} }
+\setlength\parindent{12pt}
+\colorlet{Special}{Turquoise!20!MidnightBlue!90!black}
+
+% \urldef{\example}\url{https://www.intel.com/content/www/us/en/developer/articles/technical/advanced-encryption-standard-instructions-aes-ni.html}
+
+\begin{document}
+
+\author{Silvio d'Antonio 2145048\\ Riccardo Mearelli 1807331 \\Carlo Segreto 2168340}
+\title{Intelligent power manager\medbreak \normalsize Project proposal for the Planning and Reasoning course}
+\date{A.A. 2025/2026}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\section{The general idea}
+We propose an intelligent power management system for computers, which is able to schedule several given tasks to be performed while having battery and thermal constraints. In particular it can decide whether to perform one of the assigned tasks with a low, medium, high or very high TDP (Thermal Design Power), trying to maximize the overall performance and not resulting in a state in which the battery is empty or in a throttling thermal state. We suppose that the system is also able to cool and recharge, both taking up some time, and that the user is not able to use the system during those special actions.
+
+The tasks that are taken into account are browsing, working, entertainment and gaming. Each problem instance could have a maximum amount of hours in which all the assigned tasks must be completed. Every task has a minimum TDP requirement and the system (browsing: low, working: medium, entertainment: medium, gaming: high), in addition to the need of respecting it, is given a penalty based on how much the performance was lower than the maximum applicable. Special actions of recharging and cooling apply a penalty to the system as well.
+Thus, the goal is to complete every task assigned, while ending in a state in which the battery is not drained and the system is not in thermal throttling. The metric is to minimize the total-cost, which corresponds to the total penalties applied by planned actions.
+\subsection{Rules}
+\begin{itemize}
+    \item The battery has a finite set of levels (from \verb|b00| to \verb|b100|, 5\% steps) which are modelled by next and prec predicates so that they are logically sorted.
+    \item The temperature level is defined as a finite set as well (\verb|t20| to \verb|t100|, 10°c steps), modelled by next and prec predicates for temperatures.
+    \item There is a maximum amount of time available for completing the whole task schedule, which is modelled as a finite set of hours (e.g. \verb|h1| to \verb|h16|) logically ordered by prec and next predicates.
+    \item There are only four types of tasks: browsing, working, entertainment and gaming.
+    \item If the battery is drained (\verb|b00|) it needs to be recharged.
+    \item If the system ends up in thermal throttling (\verb|t100|) it needs to be cooled down.
+\end{itemize}
+
+\subsection{PDDL modelling (draft)}
+\textbf{Types:}
+\begin{itemize}
+    \item \verb|battery|
+    \item \verb|task|
+    \item \verb|temp|
+    \item \verb|hour|
+\end{itemize}
+\bigbreak
+\textbf{Predicates:}
+\begin{itemize}
+    \item \verb|(current ?h - hour)|
+    \item \verb|(next ?h1 - hour ?h2 - hour)|
+    \item \verb|(prec ?h2 - hour ?h1 - hour)|
+    \item \verb|(scheduled ?t - task ?h - hour)|
+    \item \verb|(battery-level ?b - battery)|
+    \item \verb|(battery-next ?b1 - battery ?b2 - battery)|
+    \item \verb|(temp-level ?t - temp)|
+    \item \verb|(temp-next ?t1 ?t2 - temp)|
+    \item \verb|(temp-prec ?t2 ?t1 - temp)|
+    \item \verb|(requires-medium ?t - task)|
+    \item \verb|(requires-high ?t - task)|
+\end{itemize}
+\bigbreak
+\textbf{Actions:}
+\begin{itemize}
+    \item \verb|do_low| (perform one of the scheduled tasks with low TDP)
+    \item \verb|do_medium| (perform one of the scheduled tasks with medium TDP)
+    \item \verb|do_high| (perform one of the scheduled tasks with high TDP)
+    \item \verb|do_veryhigh| (perform one of the scheduled tasks with very high TDP)
+    \item \verb|cooling| (reduce the temperature of the system)
+    \item \verb|recharge| (recharge the battery of the system up to the max capacity)
+\end{itemize}
+\bigbreak
+\par\noindent\textbf{Initial state:} initialization of domain rules, define the amount of hours of each task to be performed, initial battery level and initial temperature level.
+
+\par\noindent\textbf{Goal:} perform every scheduled task while not having drained the whole battery and not being in thermal throttling.
+
+\par\noindent\textbf{Metric:} minimize total cost.
+
+\subsection{Instances of the problem}
+
+\begin{itemize}
+    \item Instance 1 - easy: initial battery is high, initial temperature is low, the scheduled tasks are few.
+    \item Instance 2 - medium: initial battery is high, initial temperature is low, there is a fair amount of scheduled tasks.
+    \item Instance 3 - hard: initial battery is low, initial temperature is moderate, the scheduled tasks are extensive.
+\end{itemize}
+
+\section{Reasoning tasks}
+\begin{itemize}
+    \item Legality task: is a sequence of actions legally executable? 
+    \item Projection task: at the end of a sequence of actions, how much of the task schedule is completed and what are the battery and temperature levels.
+    \item Full controller: find a sequence of actions such that at the end the goal is satisfied (all tasks are performed, no thermal throttling, battery not drained) and the metric is respected.
+\end{itemize}
+
+\section{Planner and heuristics}
+\begin{itemize}
+    \item Planner: Fast Downward with ADL (with conditional effects), both for \verb|A*| and \verb|greedy|.
+    \item Heuristics: \verb|blind|, \verb|h_ff|, \verb|h_add|, \verb|h_max|.
+\end{itemize}
+
+\end{document}
