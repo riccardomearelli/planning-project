@@ -19,11 +19,13 @@ causes_val(cooling, hour, N, N is hour + 1).
 causes_val(recharge, hour, N, N is hour + 2).
 
 fun_fluent(temp).          % temperature
-causes_val(do_low(_), temp, N, N is temp + 5).
+causes_val(do_low(_), temp, N, N is temp - 10).
 causes_val(do_medium(_), temp, N, N is temp + 10).
-causes_val(do_high(_), temp, N, N is temp + 15).
+causes_val(do_high(_), temp, N, N is temp + 10).
 causes_val(do_veryhigh(_), temp, N, N is temp + 20).
-causes_val(cooling, temp, 40, true).
+/* causes_val(cooling, temp, 40, true).*/
+causes_val(cooling, temp, N, N is temp - 30).
+
 
 fun_fluent(battery).       % battery level
 causes_val(do_low(_), battery, N, N is battery - 5).
@@ -40,14 +42,14 @@ causes_val(do_veryhigh(_), totalCost, N, N is totalCost + 0).
 causes_val(cooling, totalCost, N, N is totalCost + 5).
 causes_val(recharge, totalCost, N, N is totalCost + 6).
 
-rel_fluent(done(T)).       % task finished
+rel_fluent(done(T)) :- task(T).       % task finished
 causes_true(do_low(T), done(T), true).
 causes_true(do_medium(T), done(T), true).
 causes_true(do_high(T), done(T), true).
 causes_true(do_veryhigh(T), done(T), true).
 
-fun_fluent(remaining(T)).
-causes_val(do_low(T), remaining(T), N, N is remaining(T) - 1).
+fun_fluent(scheduled(T)) :- task(T).
+causes_val(do_low(T), scheduled(T), N, N is scheduled(T) - 1).
 
 requires_medium(working).
 requires_medium(entertainment).
@@ -90,7 +92,7 @@ poss(recharge, battery =< 20).
   /* ABBREVIATIONS */
 proc(overheated, temp >= 90).
 proc(low_battery, battery =< 15).
-proc(task_pending(T), remaining(T) > 0).
+proc(task_pending(T), scheduled(T) > 0).
 proc(some_task_pending, some(t, task_pending(t))).
 
   /* EXOGENOUS ACTIONS */
@@ -112,8 +114,10 @@ initially(done(browsing), false).
 initially(done(working), false).
 initially(done(entertainment), false).
 initially(done(gaming), false).
-
-
+initially(scheduled(browsing), 3).
+initially(scheduled(working), 5).
+initially(scheduled(entertainment), 4).
+initially(scheduled(gaming), 6).
 
   /*  Definitions of complex actions */
 proc(execute_task(T),
