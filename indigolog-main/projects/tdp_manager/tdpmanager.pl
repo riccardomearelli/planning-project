@@ -6,157 +6,275 @@
     causes_true/3,
     causes_false/3.
 
-% There is nothing to do caching on (required becase cache/1 is static)
 cache(_) :- fail.
 
-  /*  FLUENTS and CAUSAL LAWS */
-fun_fluent(hour).          % current hour
-causes_val(do_low(_), hour, N, N is hour + 1).
-causes_val(do_medium(_), hour, N, N is hour + 1).
-causes_val(do_high(_), hour, N, N is hour + 1).
-causes_val(do_veryhigh(_), hour, N, N is hour + 1).
-causes_val(cooling, hour, N, N is hour + 1).
-causes_val(recharge, hour, N, N is hour + 2).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TASKS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-fun_fluent(temp).          % temperature
-causes_val(do_low(_), temp, N, N is temp - 10).
-causes_val(do_medium(_), temp, N, N is temp + 10).
-causes_val(do_high(_), temp, N, N is temp + 10).
-causes_val(do_veryhigh(_), temp, N, N is temp + 20).
-/* causes_val(cooling, temp, 40, true).*/
-causes_val(cooling, temp, N, N is temp - 30).
-
-
-fun_fluent(battery).       % battery level
-causes_val(do_low(_), battery, N, N is battery - 5).
-causes_val(do_medium(_), battery, N, N is battery - 10).
-causes_val(do_high(_), battery, N, N is battery - 15).
-causes_val(do_veryhigh(_), battery, N, N is battery - 20).
-causes_val(recharge, battery, 100, true).
-
-fun_fluent(totalCost).     % accumulated cost
-causes_val(do_low(_), totalCost, N, N is totalCost + 4).
-causes_val(do_medium(_), totalCost, N, N is totalCost + 2).
-causes_val(do_high(_), totalCost, N, N is totalCost + 1).
-causes_val(do_veryhigh(_), totalCost, N, N is totalCost + 0).
-causes_val(cooling, totalCost, N, N is totalCost + 5).
-causes_val(recharge, totalCost, N, N is totalCost + 6).
-
-rel_fluent(done(T)) :- task(T).       % task finished
-causes_true(do_low(T), done(T), true).
-causes_true(do_medium(T), done(T), true).
-causes_true(do_high(T), done(T), true).
-causes_true(do_veryhigh(T), done(T), true).
-
-fun_fluent(scheduled(T)) :- task(T).
-causes_val(do_low(T), scheduled(T), N, N is scheduled(T) - 1).
-
-requires_medium(working).
-requires_medium(entertainment).
-requires_high(gaming).
 task(browsing).
 task(working).
 task(entertainment).
 task(gaming).
 
-  /*  ACTIONS and PRECONDITIONS*/
-prim_action(do_low(T)) :- task(T).
-poss(do_low(T),
-     and(battery >= 5,
-         neg(requires_medium(T)),
-         neg(requires_high(T)),
-         neg(done(T)))).
+requires_medium(working).
+requires_medium(entertainment).
+requires_high(gaming).
 
-prim_action(do_medium(T)) :- task(T).
-poss(do_medium(T),
-     and(battery >= 10,
-         neg(requires_high(T)),
-         neg(done(T)))).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FLUENTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-prim_action(do_high(T)) :- task(T).
-poss(do_high(T),
-     and(battery >= 15,
-         neg(done(T)))).
+fun_fluent(hour).
+fun_fluent(temp).
+fun_fluent(battery).
+fun_fluent(totalCost).
+fun_fluent(scheduled(_)).
 
-prim_action(do_veryhigh(T)) :- task(T).
-poss(do_veryhigh(T),
-     and(battery >= 20,
-         neg(done(T)))).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ACTIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+prim_action(do_low(_)).
+prim_action(do_medium(_)).
+prim_action(do_high(_)).
+prim_action(do_veryhigh(_)).
 prim_action(cooling).
-poss(cooling, temp >= 80).
-
 prim_action(recharge).
-poss(recharge, battery =< 20).
+prim_action(turn_off).
 
-  /* ABBREVIATIONS */
-proc(overheated, temp >= 90).
-proc(low_battery, battery =< 15).
-proc(task_pending(T), scheduled(T) > 0).
-proc(some_task_pending, some(t, task_pending(t))).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PRECONDITIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  /* EXOGENOUS ACTIONS */
-exog_action(background_heat).
-causes_val(background_heat, temp, N, N is temp + 3).
+poss(do_low(K),
+    and(task(K),
+    and(neg(requires_medium(K)),
+    and(neg(requires_high(K)),
+    and(battery >= 5,
+    and(scheduled(K) > 0,
+        hour =< 16)))))).
 
-exog_action(power_drain).
-causes_val(power_drain, battery, N, N is battery - 2).
+poss(do_medium(K),
+    and(task(K),
+    and(neg(requires_high(K)),
+    and(battery >= 10,
+    and(temp =< 90,
+    and(scheduled(K) > 0,
+        hour =< 16)))))).
 
-prim_action(Act) :- exog_action(Act).
-poss(Act, true) :- exog_action(Act).
+poss(do_high(K),
+    and(task(K),
+    and(battery >= 15,
+    and(temp =< 90,
+    and(scheduled(K) > 0,
+        hour =< 16))))).
 
-  /* INITIAL STATE */
+poss(do_veryhigh(K),
+    and(task(K),
+    and(battery >= 20,
+    and(temp =< 80,
+    and(scheduled(K) > 0,
+        hour =< 16))))).
+
+poss(cooling,
+    and(temp >= 70,
+        hour =< 16)).
+
+poss(recharge,
+    (and(battery < 30
+    and(temp =< 90,
+        hour =< 15)))).
+
+poss(turn_off,
+    and(
+        battery >= 0,
+        and(hour =< 16,
+        and(scheduled(browsing) = 0,
+        and(scheduled(working) = 0,
+        and(scheduled(entertainment) = 0,
+            scheduled(gaming) = 0)))))
+).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EFFECTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ---- DO LOW ----
+causes_val(do_low(K), hour, H2, H2 is hour + 1).
+causes_val(do_low(K), scheduled(K), S2, S2 is scheduled(K) - 1).
+causes_val(do_low(K), battery, B2, B2 is battery - 5).
+causes_val(do_low(K), temp, T2, T2 is temp - 10).
+causes_val(do_low(K), totalCost, C2, C2 is totalCost + 4).
+
+% ---- DO MEDIUM ----
+causes_val(do_medium(K), hour, H2, H2 is hour + 1).
+causes_val(do_medium(K), scheduled(K), S2, S2 is scheduled(K) - 1).
+causes_val(do_medium(K), battery, B2, B2 is battery - 10).
+causes_val(do_medium(K), temp, T2, T2 is temp + 10).
+causes_val(do_medium(K), totalCost, C2, C2 is totalCost + 2).
+
+% ---- DO HIGH ----
+causes_val(do_high(K), hour, H2, H2 is hour + 1).
+causes_val(do_high(K), scheduled(K), S2, S2 is scheduled(K) - 1).
+causes_val(do_high(K), battery, B2, B2 is battery - 15).
+causes_val(do_high(K), temp, T2, T2 is temp + 10).
+causes_val(do_high(K), totalCost, C2, C2 is totalCost + 1).
+
+% ---- DO VERY HIGH ----
+causes_val(do_veryhigh(K), hour, H2, H2 is hour + 1).
+causes_val(do_veryhigh(K), scheduled(K), S2, S2 is scheduled(K) - 1).
+causes_val(do_veryhigh(K), battery, B2, B2 is battery - 20).
+causes_val(do_veryhigh(K), temp, T2, T2 is temp + 20).
+causes_val(do_veryhigh(K), totalCost, C2, C2 is totalCost + 0).
+
+% ---- COOLING ----
+causes_val(cooling, hour, H2, H2 is hour + 1).
+causes_val(cooling, temp, T2, T2 is temp - 30).
+causes_val(cooling, totalCost, C2, C2 is totalCost + 5).
+
+% ---- RECHARGE ----
+causes_val(recharge, hour, H2, H2 is hour + 2).
+causes_val(recharge, battery, 100, true).
+causes_val(recharge, temp, T2, T2 is temp + 10).
+causes_val(recharge, totalCost, C2, C2 is totalCost + 6).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% INITIAL STATE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 initially(hour,1).
-initially(temp,40).
-initially(battery,60).
+initially(temp,60).
+initially(battery,100).
 initially(totalCost,0).
-initially(done(browsing), false).
-initially(done(working), false).
-initially(done(entertainment), false).
-initially(done(gaming), false).
-initially(scheduled(browsing), 3).
-initially(scheduled(working), 5).
-initially(scheduled(entertainment), 4).
-initially(scheduled(gaming), 6).
 
-  /*  Definitions of complex actions */
-proc(execute_task(T),
+initially(scheduled(browsing), 2).
+initially(scheduled(working), 0).
+initially(scheduled(entertainment), 0).
+initially(scheduled(gaming), 7).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% OPTIMIZED IDA* CONTROLLER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+proc(handle_ida(Bound),
     ndet(
-        do_veryhigh(T),
-        do_high(T),
-        do_medium(T),
-        do_low(T)
-    )).
+        % GOAL
+        [ ?(and(scheduled(browsing)=0,
+                and(scheduled(working)=0,
+                and(scheduled(entertainment)=0,
+                    scheduled(gaming)=0)))),
+          turn_off
+        ],
 
-proc(serve_task,
-    pi(t, [?(task_pending(t)), execute_task(t)])).
+        % EXPANSION
+        [
+          % COST BOUND
+          ?( totalCost =< Bound ),
 
-  /* CONTROLLERS */
+          % SELECT ONLY VALID TASKS (reduces branching a lot)
+          ?(task(K)),
+          ?(scheduled(K) > 0),
+
+          % ACTIONS (ordered: cheapest useful first, 0-cost last)
+          ndet(
+            % HIGH (cost 1) → best practical default
+            [ do_high(K), handle_ida(Bound) ],
+
+            ndet(
+              % MEDIUM (cost 2)
+              [ do_medium(K), handle_ida(Bound) ],
+
+              ndet(
+                % LOW (cost 4)
+                [ do_low(K), handle_ida(Bound) ],
+
+                ndet(
+                  % VERYHIGH (cost 0) → RESTRICTED
+                  [ ?(scheduled(K) > 1),
+                    do_veryhigh(K),
+                    handle_ida(Bound)
+                  ],
+
+                  ndet(
+                    % COOLING
+                    [ ?(temp >= 100),
+                      cooling,
+                      handle_ida(Bound)
+                    ],
+
+                    % RECHARGE
+                    [ ?(battery =< 15),
+                      recharge,
+                      handle_ida(Bound)
+                    ]
+                  )
+                )
+              )
+            )
+          )
+        ]
+    )
+).
+
+proc(ida(Bound),
+    ndet(
+        handle_ida(Bound),
+        % SMART BOUND INCREASE
+        pi(n,
+        ndet(
+            [ ?(n is Bound + 1), ida(n) ],
+            ndet(
+            [ ?(n is Bound + 2), ida(n) ],
+            ndet(
+                [ ?(n is Bound + 4), ida(n) ],
+                ndet(
+                [ ?(n is Bound + 5), ida(n) ],
+                [ ?(n is Bound + 6), ida(n) ]
+                )
+            )
+            )
+        )
+        )
+    )
+).
+
+proc(control(ida),
+    search(ida(20))
+).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DUMB CONTROLLER (FOR COMPARISON)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 proc(control(dumb),
-    while(some_task_pending, serve_task)).
+    [ while(
+        or(scheduled(browsing) > 0,
+        or(scheduled(working) > 0,
+        or(scheduled(entertainment) > 0,
+           scheduled(gaming) > 0))),
+        ndet(
+            pi(k, do_veryhigh(k)),
+            ndet(
+                pi(k, do_high(k)),
+                ndet(
+                    pi(k, do_medium(k)),
+                    ndet(
+                        pi(k, do_low(k)),
+                        ndet(
+                            cooling,
+                            recharge
+                        )
+                    )
+                )
+            )
+        )),
+      turn_off
+    ]
+).
 
-proc(control(planning),
-     search(serve_task)).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ACTION MAPPING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  /* REACTIVE CONTROLLER: */
-
-proc(control(tdp),
-  [prioritized_interrupts(
-    [ interrupt(overheated, cooling),
-      interrupt(low_battery, recharge),
-      interrupt(some_task_pending, serve_task),
-      interrupt(true, ?(wait_exog_action))
-    ])
-  ]).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  INFORMATION FOR THE EXECUTOR
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Translations of domain actions to real actions (one-to-one)
 actionNum(X, X).
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% EOF
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
