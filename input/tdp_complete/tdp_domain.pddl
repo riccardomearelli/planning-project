@@ -48,7 +48,7 @@
     (next ?h ?h2)
     (battery-level ?b1)
     (temp-level ?t2)
-    (temp-next ?t2 ?t3)
+    (temp-next ?t2 ?t3) ; da eliminare????
    ;  (temp-prec ?t2 ?t1)
     (battery-next ?b1 ?b2)
     (not (requires-medium ?t))
