@@ -78,17 +78,17 @@ poss(do_veryhigh(K),
         hour =< 16))))).
 
 poss(cooling,
-    and(temp >= 70,
+    and(temp >= 100,
         hour =< 16)).
 
 poss(recharge,
-    (and(battery < 30
     and(temp =< 90,
-        hour =< 15)))).
+        and(battery =< 15,
+        hour =< 15))).
 
 poss(turn_off,
     and(
-        battery >= 0,
+        battery >= 5,
         and(hour =< 16,
         and(scheduled(browsing) = 0,
         and(scheduled(working) = 0,
@@ -140,45 +140,72 @@ causes_val(recharge, temp, T2, T2 is temp + 10).
 causes_val(recharge, totalCost, C2, C2 is totalCost + 6).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ABBREVIATIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+proc(goal, and(scheduled(browsing)=0,
+                and(scheduled(working)=0,
+                and(scheduled(entertainment)=0,
+                and(scheduled(gaming)=0,
+                and(battery >= 5,
+                    temp =< 95)))))).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INITIAL STATE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 initially(hour,1).
-initially(temp,60).
+initially(temp,20).
 initially(battery,100).
 initially(totalCost,0).
 
-initially(scheduled(browsing), 2).
-initially(scheduled(working), 0).
-initially(scheduled(entertainment), 0).
-initially(scheduled(gaming), 7).
+initially(scheduled(browsing), 7).
+initially(scheduled(working), 2).
+initially(scheduled(entertainment), 2).
+initially(scheduled(gaming), 1).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% OPTIMIZED IDA* CONTROLLER
+% PRINT REPORT HELPER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+proc(print_report, [
+    ?(battery = B), 
+    ?(temp = T),
+    ?(totalCost = C),
+    ?(hour = H),
+    
+    [?(write('-------- FINAL  REPORT --------')), ?(nl)],
+    [?(write('Remaining battery:       ')), ?(write(B)), ?(nl)],
+    [?(write('Temperature level: ')), ?(write(T)), ?(nl)],
+    [?(write('Current hour: ')), ?(write(H)), ?(nl)],
+    [?(write('-------------------------------')), ?(nl)],
+    [?(write('TOTAL COST:                    ')), ?(write(C)), ?(nl)]
+]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IDA* CONTROLLER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 proc(handle_ida(Bound),
     ndet(
         % GOAL
-        [ ?(and(scheduled(browsing)=0,
-                and(scheduled(working)=0,
-                and(scheduled(entertainment)=0,
-                    scheduled(gaming)=0)))),
+        [ ?(goal),
           turn_off
         ],
 
         % EXPANSION
         [
-          % COST BOUND
+          % COST AND HOUR BOUND
+          ?( hour =< 16 ),
           ?( totalCost =< Bound ),
 
-          % SELECT ONLY VALID TASKS (reduces branching a lot)
+          % SELECT VALID TASKS
           ?(task(K)),
           ?(scheduled(K) > 0),
 
-          % ACTIONS (ordered: cheapest useful first, 0-cost last)
+          % ACTIONS
           ndet(
-            % HIGH (cost 1) → best practical default
+            % HIGH (cost 1)
             [ do_high(K), handle_ida(Bound) ],
 
             ndet(
@@ -190,11 +217,8 @@ proc(handle_ida(Bound),
                 [ do_low(K), handle_ida(Bound) ],
 
                 ndet(
-                  % VERYHIGH (cost 0) → RESTRICTED
-                  [ ?(scheduled(K) > 1),
-                    do_veryhigh(K),
-                    handle_ida(Bound)
-                  ],
+                  % VERYHIGH (cost 0)
+                  [ do_veryhigh(K), handle_ida(Bound) ],
 
                   ndet(
                     % COOLING
@@ -220,31 +244,129 @@ proc(handle_ida(Bound),
 proc(ida(Bound),
     ndet(
         handle_ida(Bound),
-        % SMART BOUND INCREASE
-        pi(n,
-        ndet(
-            [ ?(n is Bound + 1), ida(n) ],
-            ndet(
-            [ ?(n is Bound + 2), ida(n) ],
-            ndet(
-                [ ?(n is Bound + 4), ida(n) ],
-                ndet(
-                [ ?(n is Bound + 5), ida(n) ],
-                [ ?(n is Bound + 6), ida(n) ]
-                )
-            )
-            )
-        )
-        )
+
+        % BOUND INCREASE
+        pi(n, [ ?(n is Bound + 1), ida(n) ])
     )
 ).
 
 proc(control(ida),
-    search(ida(20))
+    [search(ida(0)),
+    print_report]
 ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% DUMB CONTROLLER (FOR COMPARISON)
+% ORDERED IDA* SIMPLIFIED CONTROLLER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+proc(handle_ida_ordered(Bound),
+    ndet(
+        % GOAL
+        [ ?(goal),
+          turn_off
+        ],
+
+        % EXPANSION
+        pi(k,
+          [
+            % TASK PRIORITY ORDER ------ SIMPLIFICATION
+            % WORKING -> ENTERTAINMENT -> BROWSING -> GAMING
+            ndet(
+              [ ?(scheduled(working) > 0),      ?(k = working)      ],
+              ndet(
+                [ ?(scheduled(entertainment) > 0), ?(k = entertainment) ],
+                ndet(
+                  [ ?(scheduled(browsing) > 0),    ?(k = browsing)    ],
+                  [ ?(scheduled(gaming) > 0),      ?(k = gaming)      ]
+                )
+              )
+            ),
+
+            % ACTIONS
+            ndet(
+                % HIGH (cost 1)
+                [ do_high(k), handle_ida_ordered(Bound) ],
+
+                ndet(
+                % MEDIUM (cost 2)
+                [ do_medium(k), handle_ida_ordered(Bound) ],
+
+                ndet(
+                    % LOW (cost 4)
+                    [ do_low(k), handle_ida_ordered(Bound) ],
+
+                    ndet(
+                    % VERYHIGH (cost 0)
+                    [ do_veryhigh(k), handle_ida_ordered(Bound) ],
+
+                    ndet(
+                        % COOLING
+                        [ ?(temp >= 100),
+                            cooling,
+                            handle_ida_ordered(Bound)
+                        ],
+
+                        % RECHARGE
+                        [ ?(battery =< 15),
+                            recharge,
+                            handle_ida_ordered(Bound)
+                        ]
+                    )
+                    )
+                )
+                )
+            )
+          ]
+        )
+    )
+).
+
+proc(ida_ordered(Bound),
+    ndet(
+        handle_ida_ordered(Bound),
+
+        % BOUND INCREASE
+        pi(n, [ ?(n is Bound + 1), ida(n) ])
+    )
+).
+
+proc(control(ida_ordered),
+    [search(ida_ordered(0)),
+    print_report]
+).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EXOGENOUS ACTIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+exog_action(boil).
+causes_val(boil, temp, 100, true).
+exog_action(discharge).
+causes_val(discharge, battery, B, B is battery - 10).
+exog_action(idle).
+causes_val(idle, hour, H, H is hour + 1).
+exog_action(battery_swap).
+causes_val(battery_swap, battery, 100, true).
+exog_action(reset_stat).
+causes_val(reset_stat, battery, 100, true).
+causes_val(reset_stat, temp, 20, true).
+
+
+prim_action(Act) :- exog_action(Act).
+poss(Act, true) :- exog_action(Act).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ORDERED IDA* SIMPLIFIED REACTIVE CONTROLLER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+proc(control(ida_ordered_reactive), [prioritized_interrupts(
+        [
+          interrupt(neg(goal), search(ida_ordered(0)))
+        ]),
+         print_report]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DUMB CONTROLLER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 proc(control(dumb),
@@ -269,7 +391,8 @@ proc(control(dumb),
                 )
             )
         )),
-      turn_off
+      turn_off,
+      print_report
     ]
 ).
 

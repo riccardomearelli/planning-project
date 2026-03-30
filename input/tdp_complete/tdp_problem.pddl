@@ -109,6 +109,14 @@
     (temp-level t40)
     (battery-level b60)
 
+    ; Fourth schedule
+    ; (scheduled working h0)
+    ; (scheduled entertainment h0)
+    ; (scheduled gaming h6)
+    ; (scheduled browsing h2)
+    ; (temp-level t60)
+    ; (battery-level b100)
+
     (current h1)
     (= (total-cost) 0)
 )
