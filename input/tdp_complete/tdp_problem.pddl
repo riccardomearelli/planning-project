@@ -102,12 +102,12 @@
     ; (battery-level b70)
 
     ; Third schedule
-    (scheduled working h3)
-    (scheduled entertainment h2)
-    (scheduled gaming h5)
-    (scheduled browsing h2)
-    (temp-level t40)
-    (battery-level b60)
+    ; (scheduled working h3)
+    ; (scheduled entertainment h2)
+    ; (scheduled gaming h5)
+    ; (scheduled browsing h2)
+    ; (temp-level t40)
+    ; (battery-level b60)
 
     ; Fourth schedule
     ; (scheduled working h0)
@@ -116,6 +116,31 @@
     ; (scheduled browsing h2)
     ; (temp-level t60)
     ; (battery-level b100)
+
+    ; Tested schedules
+    ; Easy 6h
+    (scheduled working h1)
+    (scheduled entertainment h2)
+    (scheduled gaming h2)
+    (scheduled browsing h1)
+    (temp-level t20)
+    (battery-level b100)
+
+    ; Medium 9h
+    ; (scheduled working h3)
+    ; (scheduled entertainment h2)
+    ; (scheduled gaming h2)
+    ; (scheduled browsing h2)
+    ; (temp-level t30)
+    ; (battery-level b80)
+
+    ; Hard 12h
+    ; (scheduled working h3)
+    ; (scheduled entertainment h2)
+    ; (scheduled gaming h5)
+    ; (scheduled browsing h2)
+    ; (temp-level t40)
+    ; (battery-level b60)
 
     (current h1)
     (= (total-cost) 0)
