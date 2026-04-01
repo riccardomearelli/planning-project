@@ -112,21 +112,21 @@ causes_val(do_medium(K), hour, H2, H2 is hour + 1).
 causes_val(do_medium(K), scheduled(K), S2, S2 is scheduled(K) - 1).
 causes_val(do_medium(K), battery, B2, B2 is battery - 10).
 causes_val(do_medium(K), temp, T2, T2 is temp + 10).
-causes_val(do_medium(K), totalCost, C2, C2 is totalCost + 2).
+causes_val(do_medium(K), totalCost, C2, C2 is totalCost + 3).
 
 % ---- DO HIGH ----
 causes_val(do_high(K), hour, H2, H2 is hour + 1).
 causes_val(do_high(K), scheduled(K), S2, S2 is scheduled(K) - 1).
 causes_val(do_high(K), battery, B2, B2 is battery - 15).
 causes_val(do_high(K), temp, T2, T2 is temp + 10).
-causes_val(do_high(K), totalCost, C2, C2 is totalCost + 1).
+causes_val(do_high(K), totalCost, C2, C2 is totalCost + 2).
 
 % ---- DO VERY HIGH ----
 causes_val(do_veryhigh(K), hour, H2, H2 is hour + 1).
 causes_val(do_veryhigh(K), scheduled(K), S2, S2 is scheduled(K) - 1).
 causes_val(do_veryhigh(K), battery, B2, B2 is battery - 20).
 causes_val(do_veryhigh(K), temp, T2, T2 is temp + 20).
-causes_val(do_veryhigh(K), totalCost, C2, C2 is totalCost + 0).
+causes_val(do_veryhigh(K), totalCost, C2, C2 is totalCost + 1).
 
 % ---- COOLING ----
 causes_val(cooling, hour, H2, H2 is hour + 1).
@@ -205,11 +205,11 @@ proc(handle_ida(Bound),
 
           % ACTIONS
           ndet(
-            % HIGH (cost 1)
+            % HIGH (cost 2)
             [ do_high(K), handle_ida(Bound) ],
 
             ndet(
-              % MEDIUM (cost 2)
+              % MEDIUM (cost 3)
               [ do_medium(K), handle_ida(Bound) ],
 
               ndet(
@@ -217,17 +217,17 @@ proc(handle_ida(Bound),
                 [ do_low(K), handle_ida(Bound) ],
 
                 ndet(
-                  % VERYHIGH (cost 0)
+                  % VERYHIGH (cost 1)
                   [ do_veryhigh(K), handle_ida(Bound) ],
 
                   ndet(
-                    % COOLING
+                    % COOLING (cost 5)
                     [ ?(temp >= 100),
                       cooling,
                       handle_ida(Bound)
                     ],
 
-                    % RECHARGE
+                    % RECHARGE (cost 6)
                     [ ?(battery =< 15),
                       recharge,
                       handle_ida(Bound)
@@ -284,11 +284,11 @@ proc(handle_ida_ordered(Bound),
 
             % ACTIONS
             ndet(
-                % HIGH (cost 1)
+                % HIGH (cost 2)
                 [ do_high(k), handle_ida_ordered(Bound) ],
 
                 ndet(
-                % MEDIUM (cost 2)
+                % MEDIUM (cost 3)
                 [ do_medium(k), handle_ida_ordered(Bound) ],
 
                 ndet(
@@ -296,17 +296,17 @@ proc(handle_ida_ordered(Bound),
                     [ do_low(k), handle_ida_ordered(Bound) ],
 
                     ndet(
-                    % VERYHIGH (cost 0)
+                    % VERYHIGH (cost 1)
                     [ do_veryhigh(k), handle_ida_ordered(Bound) ],
 
                     ndet(
-                        % COOLING
+                        % COOLING (cost 5)
                         [ ?(temp >= 100),
                             cooling,
                             handle_ida_ordered(Bound)
                         ],
 
-                        % RECHARGE
+                        % RECHARGE (cost 6)
                         [ ?(battery =< 15),
                             recharge,
                             handle_ida_ordered(Bound)
