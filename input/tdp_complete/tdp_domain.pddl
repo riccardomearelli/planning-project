@@ -29,10 +29,13 @@
     ; Penalties for perfomance
     ; | Task          | Low | Medium | High | Very High |
     ; | ------------- | --- | ------ | ---- | --------- |
-    ; | Browsing      | 3   | 2      | 1    | 0         |
-    ; | Working       | -   | 2      | 1    | 0         |
-    ; | Entertainment | -   | 2      | 1    | 0         |
-    ; | Gaming        | -   | -      | 1    | 0         |
+    ; | Browsing      | 4   | 3      | 2    | 1         |
+    ; | Working       | -   | 3      | 2    | 1         |
+    ; | Entertainment | -   | 3      | 2    | 1         |
+    ; | Gaming        | -   | -      | 2    | 1         |
+
+    ; | recharge      | 6 | 
+    ; | cooling       | 5 | 
 )
 
 (:functions
@@ -93,7 +96,7 @@
     (not (battery-level ?b1))
     (battery-level ?b3)
 
-    (increase (total-cost) 2)
+    (increase (total-cost) 3)
  )
 )
 
@@ -122,7 +125,7 @@
     (not (battery-level ?b1))
     (battery-level ?b4)
 
-    (increase (total-cost) 1)
+    (increase (total-cost) 2)
  )
 )
 
@@ -153,7 +156,7 @@
     (not (battery-level ?b1))
     (battery-level ?b5)
 
-    (increase (total-cost) 0)
+    (increase (total-cost) 1)
  )
 )
 
