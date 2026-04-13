@@ -1,6 +1,6 @@
 (define (domain tdp_domain)
 
-(:requirements :equality :typing :strips :action-costs :conditional-effects) ;strips?
+(:requirements :equality :typing :strips :action-costs :conditional-effects)
 
 (:types hour task battery temp - object)
 
@@ -12,7 +12,7 @@
     (scheduled ?t - task ?h - hour)
 
     (battery-level ?b - battery)
-    (battery-next ?b1 - battery ?b2 - battery) ; transition relation
+    (battery-next ?b1 - battery ?b2 - battery)
 
     (temp-level ?t - temp)
     (temp-next ?t1 ?t2 - temp)
@@ -51,8 +51,7 @@
     (next ?h ?h2)
     (battery-level ?b1)
     (temp-level ?t2)
-    (temp-next ?t2 ?t3) ; da eliminare????
-   ;  (temp-prec ?t2 ?t1)
+    (temp-next ?t2 ?t3)
     (battery-next ?b1 ?b2)
     (not (requires-medium ?t))
     (not (requires-high ?t))
@@ -177,7 +176,7 @@
       (not (current ?h1))
       (current ?h2)
 
-      (increase (total-cost) 5)
+      (increase (total-cost) 100)
     )
 )
 
@@ -199,7 +198,7 @@
       (not (battery-level ?b))
       (battery-level b100)
 
-      (increase (total-cost) 6)
+      (increase (total-cost) 500)
     )
 )
 
