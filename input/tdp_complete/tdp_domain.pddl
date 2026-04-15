@@ -176,7 +176,7 @@
       (not (current ?h1))
       (current ?h2)
 
-      (increase (total-cost) 100)
+      (increase (total-cost) 5)
     )
 )
 
@@ -198,7 +198,7 @@
       (not (battery-level ?b))
       (battery-level b100)
 
-      (increase (total-cost) 500)
+      (increase (total-cost) 6)
     )
 )
 
