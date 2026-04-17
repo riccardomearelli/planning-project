@@ -159,10 +159,10 @@ initially(temp,20).
 initially(battery,100).
 initially(totalCost,0).
 
-initially(scheduled(browsing), 7).
-initially(scheduled(working), 2).
+initially(scheduled(browsing), 2).
+initially(scheduled(working), 3).
 initially(scheduled(entertainment), 2).
-initially(scheduled(gaming), 1).
+initially(scheduled(gaming), 2).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PRINT REPORT HELPER
